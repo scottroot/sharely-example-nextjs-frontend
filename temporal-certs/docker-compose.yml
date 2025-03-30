@@ -1,0 +1,26 @@
+services:
+  tcld-gen:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM golang:1.22
+        WORKDIR /app
+        COPY . .
+        RUN apt-get update && apt-get install -y make git
+        RUN git clone https://github.com/temporalio/tcld.git
+        RUN cd tcld && make && cp tcld /usr/local/bin/tcld
+    volumes:
+      - ./:/app/generated_certs
+    command: sh -c "\
+      tcld --auto_confirm gen ca \
+        --org temporal -d 365d \
+        --ca-cert /app/generated_certs/ca.pem \
+        --ca-key /app/generated_certs/ca.key \
+      && tcld --auto_confirm gen leaf \
+        --org temporal -d 364d \
+        --ca-cert /app/generated_certs/ca.pem \
+        --ca-key /app/generated_certs/ca.key \
+        --cert /app/generated_certs/client.pem \
+        --key /app/generated_certs/client.key \
+      "
+

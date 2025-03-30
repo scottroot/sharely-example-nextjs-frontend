@@ -36,7 +36,7 @@ function CustomerNameInput(
   };
 
   return (
-    <div className="max-w-sm space-y-1 mb-10">
+    <div className="max-w-sm mx-auto space-y-1 mb-10">
       <label className="block text-sm font-light text-gray-500">
         Account Name
       </label>

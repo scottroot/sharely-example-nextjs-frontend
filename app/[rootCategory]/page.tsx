@@ -1,21 +1,26 @@
 import { graphRead } from "@/lib/neo4j";
 import Link from "next/link";
 import Breadcrumbs from "@/app/BreadcrumbHeader";
+import {getIronSession} from "iron-session";
+import {SessionData, sessionOptions} from "@/lib/session";
+import {cookies} from "next/headers";
 
 
-async function getParentCategories(rootCategoryName: string) {
+async function getParentCategories(account: string, rootCategoryName: string) {
   try {
     const query = `
-      MATCH (r:RootCategory {name: $rootCategoryName})<-[:BELONGS_TO]-(p:ParentCategory)
+      MATCH (r:RootCategory {account: $account, name: $rootCategoryName})<-[:BELONGS_TO]-(p:ParentCategory {account: $account})
       WITH collect(p.name) as parent_categories
       RETURN parent_categories
     `;
 
-    const result = await graphRead(query,{ rootCategoryName });
+    const result = await graphRead(query,{ account, rootCategoryName });
     // as unknown as {parent_category?: string[]};
     console.log(JSON.stringify(result, null, 4))
 
-    if (!result.length || !result[0].parent_categories) throw new Error(`No Parent Categories found for Root Category: ${rootCategoryName}`);
+    if (!result.length || !result[0].parent_categories) {
+      throw new Error(`No Parent Categories found for Root Category: ${rootCategoryName}`);
+    }
 
     return result[0].parent_categories as string[];
   } catch (error) {
@@ -25,11 +30,23 @@ async function getParentCategories(rootCategoryName: string) {
 }
 
 
-export default async function RootCategoryPage({ params, }: { params: Promise<{ rootCategory: string }>}) {
+export default async function RootCategoryPage(
+  { params }:
+    { params: Promise<{rootCategory: string}> }
+) {
   const rootCategory = decodeURIComponent((await params).rootCategory);
-  if (!rootCategory) return <div>404<br/>No Root Category selected</div>;
+  if (!rootCategory) {
+    return <div>404<br/>No Root Category selected</div>;
+  }
 
-  const parentCategories = await getParentCategories(rootCategory);
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
+  if(!session || !session.account) {
+    return (
+      <div>404<br />Please <Link href="/login" className="italic">login</Link></div>
+    )
+  }
+
+  const parentCategories = await getParentCategories(session.account, rootCategory);
   return (
     <div className="grid p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <Breadcrumbs rootCategory={rootCategory} parentCategory={undefined} />

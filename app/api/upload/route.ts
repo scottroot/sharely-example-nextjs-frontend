@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import {uploadFileToS3} from "@/app/api/upload/uploadFileToS3";
-import {runTemporalWorkflow} from "@/app/api/upload/runTemporalWorkflow";
+import { uploadFileToS3 } from "./uploadFileToS3";
+import { runTemporalWorkflow } from "./runTemporalWorkflow";
 
 
 export async function POST(req: NextRequest): Promise<NextResponse<{error?: string, runId?: string, result?: string[]}>> {
   const formData = await req.formData();
   const file = formData.get("file") as File;
   const customerName = formData.get("customerName") as string;
-  console.log(JSON.stringify({fileName: file.name}))
 
   if (!file || !customerName) {
     return NextResponse.json({ error: "Missing file or customer name..." }, { status: 400 });
@@ -16,8 +15,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<{error?: stri
 
   try {
     const { fileUrl, bucket, fileName } = await uploadFileToS3(file, customerName);
-
-    console.log(JSON.stringify({fileUrl}));
 
     const { runId, result } = await runTemporalWorkflow(
       "PDF2CategoriesWorkflow",
@@ -28,6 +25,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<{error?: stri
       }]
     )
     console.log(JSON.stringify(runId));
+
     return NextResponse.json({ runId, result });
   } catch (err) {
     console.log(err);

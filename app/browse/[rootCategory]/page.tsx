@@ -55,7 +55,7 @@ export default async function RootCategoryPage(
           {parentCategories && parentCategories.map((category: string, idx: number) => (
             <li key={idx} className="tracking-[-.01em]">
               <Link
-                href={`/${encodeURIComponent(rootCategory)}/${encodeURIComponent(category)}`}
+                href={`/browse/${encodeURIComponent(rootCategory)}/${encodeURIComponent(category)}`}
                 className="text-sm font-medium text-gray-900 hover:text-gray-950 hover:underline"
               >
                 {category}

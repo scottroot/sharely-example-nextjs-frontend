@@ -49,7 +49,7 @@ export default async function Home() {
           {rootCategories && rootCategories.map((category: RootDataItem, idx: number) => (
             <li key={idx} className="tracking-[-.01em]">
               <Link
-                href={`/${encodeURIComponent(category.root_category)}`}
+                href={`/browse/${encodeURIComponent(category.root_category)}`}
                 className="text-sm font-medium text-gray-900 hover:text-gray-950 hover:underline"
               >
                 {category.root_category}
@@ -58,7 +58,7 @@ export default async function Home() {
                 {category.top_3.map((child: string, ci: number) => (
                   <li key={ci} className="list-disc ml-8 mt-1/2">
                     <Link
-                      href={`/${encodeURIComponent(category.root_category)}/${encodeURIComponent(child)}`}
+                      href={`/browse/${encodeURIComponent(category.root_category)}/${encodeURIComponent(child)}`}
                       className="text-xs/4 text-gray-500 hover:text-gray-900"
                     >
                       <code

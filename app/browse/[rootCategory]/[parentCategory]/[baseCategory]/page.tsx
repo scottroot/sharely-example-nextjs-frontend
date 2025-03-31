@@ -7,6 +7,7 @@ import { graphRead } from "@/lib/neo4j";
 import Breadcrumbs from "@/app/BreadcrumbHeader";
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
+import {ChevronRightIcon} from "@heroicons/react/20/solid";
 
 
 
@@ -34,14 +35,19 @@ async function getChunks(account: string, baseCategoryName: string) {
       throw new Error(`No Base Categories found for Parent Category: ${baseCategoryName}`);
     }
 
-    const chunks: {text: string, url: string}[] = [];
+    const chunks: {text: string, fileName: string, pageNumber: number, url: string}[] = [];
     for (const chunk of result) {
       const command = new GetObjectCommand({
         Bucket: `${process.env.AWS_BUCKET_NAME}`,
         Key: `${account}/${chunk.fileName}`,
       });
       const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 120 });
-      chunks.push({text: chunk.text, url: `${signedUrl}#page=${chunk.pageNumber}`});
+      chunks.push({
+        text: chunk.text,
+        fileName: chunk.fileName,
+        pageNumber: chunk.pageNumber,
+        url: `${signedUrl}#page=${chunk.pageNumber}`
+      });
     }
 
     return chunks;
@@ -75,13 +81,23 @@ export default async function BaseCategoryPage(
     <div className="grid p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <Breadcrumbs rootCategory={rootCategory} parentCategory={parentCategory} baseCategory={baseCategory} />
       <main className="flex flex-col gap-[32px] items-center sm:items-start">
-        <ol className="list-inside text-sm/6 text-center sm:text-left space-y-6 divide-y divide-gray-300">
+        <ol className="list-inside text-sm/6 text-center sm:text-left space-y-6 divide-y divide-gray-300 max-w-4xl mx-auto">
           {textChunks && textChunks.map((chunk, idx) => (
             <li key={idx} className="tracking-[-.01em] pb-10 pt-4">
               <div className="rounded-lg bg-neutral-100 shadow-lg px-4 py-5 sm:p-6">
                 {/*<Markdown>*/}
-                  <p className="text-gray-700 dark:text-white">{chunk.text}</p>
-                  <a className="text-blue-700 hover:underline hover:text-blue-800" href={chunk.url} target="_blank" rel="noopener noreferrer">Open page</a>
+                  <span
+                    className="text-gray-900"
+                    dangerouslySetInnerHTML={{ __html: chunk.text.trim().replaceAll("\n", "<br />") }}
+                  />
+                  <div className="grid grid-cols-3 mt-2">
+                    <p className="text-gray-600 text-left">{chunk.fileName}</p>
+                    <p className="text-gray-600 text-center">pg. {chunk.pageNumber}</p>
+                    <a className="text-gray-600 text-right hover:underline" href={chunk.url} target="_blank" rel="noopener noreferrer">
+                      Open page
+                      <ChevronRightIcon className="inline w-5 h-5" aria-hidden="true" />
+                    </a>
+                  </div>
                 {/*</Markdown>*/}
               </div>
             </li>

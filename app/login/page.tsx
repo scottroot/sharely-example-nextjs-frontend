@@ -2,6 +2,7 @@
 import {useEffect, useState} from "react";
 import ReactMarkdown from "react-markdown";
 import clsx from "clsx";
+import useSWR from "swr";
 
 
 function SaveIcon(props: any) {
@@ -21,14 +22,15 @@ function EditIcon(props: any) {
 }
 
 function CustomerNameInput(
-  {value, setValue, savedValue, setSavedValue, isEditing, setIsEditing, loaded}:
-    { value: any, setValue: any, savedValue: any, setSavedValue: any, isEditing: any, setIsEditing: any, loaded: boolean }
+  {value, setValue, savedValue, setSavedValue, isEditing, setIsEditing, loaded, mutate}:
+    { value: any, setValue: any, savedValue: any, setSavedValue: any, isEditing: any, setIsEditing: any, loaded: boolean, mutate: any }
 ) {
 
   const handleSave = async () => {
     setSavedValue(value);
     setIsEditing(false);
     await fetch("/api/account", {method: "POST", body: JSON.stringify({account: value})})
+    mutate()
   };
 
   const handleEdit = () => {
@@ -84,7 +86,7 @@ export default function Home() {
   const [value, setValue] = useState("");
   const [savedValue, setSavedValue] = useState("");
   const [isEditing, setIsEditing] = useState(true);
-
+  const { mutate } = useSWR("/api/account");
 
   useEffect(() => {
     (async () => {
@@ -94,7 +96,6 @@ export default function Home() {
       setLoaded(true)
     })()
   }, [])
-
   return (
     <div className="max-w-2xl mx-auto my-10 p-4 border border-gray-300 rounded-lg">
       <h2 className="text-xl font-bold mb-4">Login</h2>
@@ -103,6 +104,7 @@ export default function Home() {
         savedValue={savedValue} setSavedValue={setSavedValue}
         isEditing={isEditing} setIsEditing={setIsEditing}
         loaded={loaded}
+        mutate={mutate}
       />
     </div>
   );

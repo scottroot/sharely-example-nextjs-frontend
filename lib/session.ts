@@ -13,7 +13,7 @@ export type SessionData = {
  * Default session data, used when a session is first created.
  */
 export const defaultSession: SessionData = {
-  account: "dev",
+  account: "",
 };
 
 /**

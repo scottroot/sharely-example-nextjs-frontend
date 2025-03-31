@@ -24,7 +24,7 @@ export default async function Home() {
         <p className="mb-6">This is a demo with a simulated environment and does not contain any Sharely data.</p>
         <ol className="pl-6 list-decimal list-inside text-sm/6 text-center sm:text-left space-y-4">
           <li className="tracking-[-.01em] text-lg text-gray-900">
-            <strong>Login</strong>: Simulated login - type in customer account name. {account && (<span className="text-green-700 italic">Done</span>)}
+            <strong>Login</strong>: Simulated login - type in customer account name. {(account && account !== "dev") && (<span className="text-green-700 italic">Done</span>)}
           </li>
           <li className="tracking-[-.01em] text-lg text-gray-900">
             <strong>Upload</strong>: Upload a knowledge document (PDF) file you&apos;d like to have categorized.

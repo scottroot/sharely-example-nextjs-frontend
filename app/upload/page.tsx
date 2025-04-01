@@ -7,10 +7,11 @@ import useSWR from "swr";
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [markdownContent, setMarkdownContent] = useState<string[] | null>(null);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [workflowResults, setWorkflowResults] = useState<string[] | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const { data: account, mutate, isLoading, isValidating, error } = useSWR(
+  const { data: account, isLoading } = useSWR(
     "/api/account",
     (url) => fetch(url).then(res => res.json().then(d => d?.account))
   );
@@ -21,27 +22,66 @@ export default function Home() {
     }
   };
 
+  // const handleUpload = async() => {
+  //   if (!file) return;
+  //
+  //   setLoading(true);
+  //
+  //   const formData = new FormData();
+  //   formData.append("file", file);
+  //   formData.append("customerName", account);
+  //
+  //   const res = await fetch("/api/upload", {
+  //     method: "POST",
+  //     body: formData,
+  //   }).catch((e: Error) => console.log(e));
+  //   if(res?.ok) {
+  //     const data = await res.json();
+  //     const { runId, result, error } = data as {runId?: string, result?: any, error?: any};
+  //     setFileUrl(runId || "Failed to extract text");
+  //     setMarkdownContent(result || "Failed to extract text");
+  //   } else {
+  //     console.log("failed...")
+  //   }
+  //
+  //   setLoading(false);
+  // };
   const handleUpload = async() => {
     if (!file) return;
 
     setLoading(true);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("customerName", account);
+    // const formData = new FormData();
+    // formData.append("file", file);
+    // formData.append("customerName", account);
 
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    }).catch((e: Error) => console.log(e));
-    if(res?.ok) {
-      const data = await res.json();
-      const { runId, result } = data as {runId: string, result: any};
-      setFileUrl(runId || "Failed to extract text");
-      setMarkdownContent(result || "Failed to extract text");
-    } else {
-      console.log("failed...")
+    const presignedUrlRes = await fetch(`/api/presigned-s3-url?fileName=${file.name}&contentType=${file.type}`);
+    const { url: presignedUrl } = await presignedUrlRes.json();
+
+    if(!presignedUrl) {
+      console.error("Failed to get presigned S3 url for account upload...");
+      return;
     }
+
+    const upload = await fetch(presignedUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!upload.ok) throw new Error("Upload failed");
+
+    const triggerRes = await fetch("/api/start-workflow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({customerName: account, fileName: file.name}),
+    });
+    if(!triggerRes.ok) throw new Error("Failed to start workflow...");
+
+    const data = await triggerRes.json();
+    const { runId, result, error = "" } = data as {runId?: string, result?: any, error?: any};
+    setUploadError(error);
+    setRunId(runId || "Failed to extract text");
+    setWorkflowResults(result || "Failed to extract text");
 
     setLoading(false);
   };
@@ -66,8 +106,11 @@ export default function Home() {
       {(!account && !isLoading) &&
         <p className="text-sm text-gray-500">Go to Login first...</p>
       }
-
-      {fileUrl && fileUrl}
+        {uploadError &&
+          <span className="text-red-500">{uploadError}</span>
+        }
+        {runId && runId}
+        {workflowResults && workflowResults}
       </div>
     </div>
   );

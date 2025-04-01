@@ -1,27 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { uploadFileToS3 } from "./uploadFileToS3";
 import { runTemporalWorkflow } from "./runTemporalWorkflow";
+import {getIronSession} from "iron-session";
+import {SessionData, sessionOptions} from "@/lib/session";
+import {cookies} from "next/headers";
 
 
 export async function POST(req: NextRequest): Promise<NextResponse<{error?: string, runId?: string, result?: string[]}>> {
-  const formData = await req.formData();
-  const file = formData.get("file") as File;
-  const customerName = formData.get("customerName") as string;
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
+  const account = session.account;
 
-  if (!file || !customerName) {
-    return NextResponse.json({ error: "Missing file or customer name..." }, { status: 400 });
+  const { fileName, customerName } = await req.json();
+
+  if (!fileName || !customerName || customerName !== account) {
+    console.error(`Start Workflow API route error, invalid input(s): ${JSON.stringify({fileName, customerName, account})}`)
+    return NextResponse.json({ error: "Missing valid file or customer name..." }, { status: 400 });
   }
 
+  // const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_BUCKET_REGION}.amazonaws.com/${account}/${fileName}`;
 
   try {
-    // const { fileUrl, bucket, fileName } = await uploadFileToS3(file, customerName);
-
     const { runId, result } = await runTemporalWorkflow(
       "PDF2CategoriesWorkflow",
       "parse-pdf-queue",
       [{
-        account: customerName,
-        file_name: file.name,
+        account: account,
+        file_name: fileName,
       }]
     )
     console.log(JSON.stringify(runId));

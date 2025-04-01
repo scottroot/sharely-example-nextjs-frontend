@@ -15,6 +15,8 @@ async function getParentCategories(account: string, rootCategoryName: string) {
     `;
 
     const result = await graphRead(query,{ account, rootCategoryName });
+    // as unknown as {parent_category?: string[]};
+    console.log(JSON.stringify(result, null, 4))
 
     if (!result.length || !result[0].parent_categories) {
       throw new Error(`No Parent Categories found for Root Category: ${rootCategoryName}`);
@@ -53,7 +55,7 @@ export default async function RootCategoryPage(
           {parentCategories && parentCategories.map((category: string, idx: number) => (
             <li key={idx} className="tracking-[-.01em]">
               <Link
-                href={`/browse/${encodeURIComponent(rootCategory)}/${encodeURIComponent(category)}`}
+                href={`/${encodeURIComponent(rootCategory)}/${encodeURIComponent(category)}`}
                 className="text-sm font-medium text-gray-900 hover:text-gray-950 hover:underline"
               >
                 {category}

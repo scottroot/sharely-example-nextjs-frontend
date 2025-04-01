@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { getIronSession } from "iron-session";
+import Markdown from "react-markdown";
 import { SessionData, sessionOptions } from "@/lib/session";
 import { graphRead } from "@/lib/neo4j";
 import Breadcrumbs from "@/app/BreadcrumbHeader";
@@ -19,12 +20,17 @@ async function getChunks(account: string, baseCategoryName: string) {
     },
   });
   try {
+    // const query = `
+    //   MATCH (b:BaseCategory {account: $account, name: $baseCategoryName})<-[:HAS_CATEGORY]-(c:Chunk {account: $account})
+    //   WITH collect(c.text) as text_chunks
+    //   RETURN text_chunks
+    // `;
     const query = `
       MATCH (b:BaseCategory {account: $account, name: $baseCategoryName})<-[:HAS_CATEGORY]-(c:Chunk {account: $account})
       RETURN c.file_name as fileName, c.page_number as pageNumber, c.text as text
     `;
     const result = await graphRead(query,{ account, baseCategoryName });
-
+    console.log(JSON.stringify(result));
     if (!result.length) {
       throw new Error(`No Base Categories found for Parent Category: ${baseCategoryName}`);
     }

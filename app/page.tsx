@@ -7,7 +7,7 @@ import { SessionData, sessionOptions } from "@/lib/session";
 
 export default async function Home() {
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
-  const account = session.account || "dev";
+  const account = session.account;
 
   return (
     // <div className="grid items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">

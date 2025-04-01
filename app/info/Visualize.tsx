@@ -1,8 +1,8 @@
 "use client";
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
-
-const ForceGraph2D = dynamic(() => import('react-force-graph').then(mod => mod.ForceGraph2D), { ssr: false });
+// import dynamic from "next/dynamic";
+// import { useEffect, useState } from "react";
+//
+// const ForceGraph2D = dynamic(() => import('react-force-graph').then(mod => mod.ForceGraph2D), { ssr: false });
 
 export default function Visualize({ data }: { data: any }) {
   return (

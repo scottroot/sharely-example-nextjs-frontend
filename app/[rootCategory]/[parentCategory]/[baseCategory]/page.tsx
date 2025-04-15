@@ -1,15 +1,24 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { getIronSession } from "iron-session";
-import Markdown from "react-markdown";
+import Markdown, {MarkdownAsync} from "react-markdown";
 import { SessionData, sessionOptions } from "@/lib/session";
 import { graphRead } from "@/lib/neo4j";
 import Breadcrumbs from "@/app/BreadcrumbHeader";
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
 import {ChevronRightIcon} from "@heroicons/react/20/solid";
+import {Suspense} from "react";
 
 
+
+type Chunk = {
+  text: string;
+  fileName: string;
+  pageNumber: number;
+  url: string;
+  headers: string[];
+}
 
 async function getChunks(account: string, baseCategoryName: string) {
   const s3Client = new S3Client({
@@ -27,15 +36,18 @@ async function getChunks(account: string, baseCategoryName: string) {
     // `;
     const query = `
       MATCH (b:BaseCategory {account: $account, name: $baseCategoryName})<-[:HAS_CATEGORY]-(c:Chunk {account: $account})
-      RETURN c.file_name as fileName, c.page_number as pageNumber, c.text as text
+      RETURN c.file_name as fileName, c.page_number as pageNumber, c.text as text, c.headers as headers
     `;
-    const result = await graphRead(query,{ account, baseCategoryName });
+    const result = await graphRead<Chunk[]>(
+      query,
+      {account, baseCategoryName }
+    )
     console.log(JSON.stringify(result));
     if (!result.length) {
       throw new Error(`No Base Categories found for Parent Category: ${baseCategoryName}`);
     }
 
-    const chunks: {text: string, fileName: string, pageNumber: number, url: string}[] = [];
+    const chunks: Chunk[] = [];
     for (const chunk of result) {
       const command = new GetObjectCommand({
         Bucket: `${process.env.AWS_BUCKET_NAME}`,
@@ -46,7 +58,8 @@ async function getChunks(account: string, baseCategoryName: string) {
         text: chunk.text,
         fileName: chunk.fileName,
         pageNumber: chunk.pageNumber,
-        url: `${signedUrl}#page=${chunk.pageNumber}`
+        url: `${signedUrl}#page=${chunk.pageNumber}`,
+        headers: chunk.headers,
       });
     }
 
@@ -85,11 +98,21 @@ export default async function BaseCategoryPage(
           {textChunks && textChunks.map((chunk, idx) => (
             <li key={idx} className="tracking-[-.01em] pb-10 pt-4">
               <div className="rounded-lg bg-neutral-100 shadow-lg px-4 py-5 sm:p-6">
+                {(chunk.headers && chunk.headers.length) &&
+                  chunk.headers.map((header, idx) => (
+                    <p key={idx}>{header}</p>
+                  ))
+                }
                 {/*<Markdown>*/}
-                  <span
-                    className="text-gray-900"
-                    dangerouslySetInnerHTML={{ __html: chunk.text.trim().replaceAll("\n", "<br />") }}
-                  />
+                {/*  <span*/}
+                {/*    className="text-gray-900"*/}
+                {/*    dangerouslySetInnerHTML={{ __html: chunk.text.trim().replaceAll("\n", "<br />") }}*/}
+                {/*  />*/}
+                {/*  <Suspense fallback={null}>*/}
+                {/*    <MarkdownAsync>*/}
+                {/*      {chunk.text}*/}
+                {/*    </MarkdownAsync>*/}
+                {/*  </Suspense>*/}
                   <div className="grid grid-cols-3 mt-2">
                     <p className="text-gray-600 text-left">{chunk.fileName}</p>
                     <p className="text-gray-600 text-center">pg. {chunk.pageNumber}</p>

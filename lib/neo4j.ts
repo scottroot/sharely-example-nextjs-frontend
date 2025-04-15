@@ -9,22 +9,22 @@ import {driver, isInt} from "./neo4jDriver";
  *                 Supports strings, numbers, string arrays, and number arrays.
  * @returns A promise that resolves to an array of formatted records.
  */
-export async function graphRead(
+export async function graphRead<T=any>(
   query: string,
-  params: { [p: string]: string | number | string[] | number[] } = {}
-) {
+  params: { [p: string]: string | number | string[] | number[] } = {},
+  returnRecords: boolean = false
+): Promise<T> {
   // Executes the Cypher query...
-  const { records} = await driver.executeQuery(query, params, {
-    // database: "neo4j"
-  });
-
+  // const { records} = await driver.executeQuery(query, params, {});
+  const { records} = await driver.executeQuery(query, params, {});
+  if (returnRecords) return records as T;
   // Parses the response into a usable format and return it
   return records.map((r) => {
     const obj = r.toObject();
     return Object.fromEntries(
       Object.entries(obj).map(([key, value]) => [key, extractProperties(value)])
     );
-  });
+  }) as T;
 }
 
 /**

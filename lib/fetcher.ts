@@ -21,3 +21,10 @@ export default async function fetcher<JSON = unknown>(
 
 // const fetcher = (url) => fetch(url).then(res => res.json());
 // export default fetcher;
+
+// async function fetcher(init: any, key?: string) {
+//   const response = await fetch(init);
+//   const data = await response.json();
+//   if(key) return data[key];
+//   return data;
+// }

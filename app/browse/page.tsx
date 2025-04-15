@@ -20,7 +20,7 @@ async function getRootCategories(account: string) {
 
     const result = await graphRead(query, { account });
 
-    if (!result.length) throw("Query response had no results...");
+    if (!result.length) return [];
 
     return result as RootDataItem[];
   } catch (error) {

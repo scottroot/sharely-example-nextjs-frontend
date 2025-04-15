@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { uploadFileToS3 } from "./uploadFileToS3";
 import { runTemporalWorkflow } from "./runTemporalWorkflow";
 
 

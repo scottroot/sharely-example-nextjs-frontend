@@ -14,7 +14,7 @@ export default function BreadcrumbHeader({rootCategory, parentCategory, baseCate
     <div className="flex flex-col w-full">
       <div>
         <nav aria-label="Breadcrumb" className="flex xhidden xsm:flex items-center">
-          <Link href="/">
+          <Link href="/browse">
             <HomeIcon className="-ml-1 mr-4 size-5 shrink-0 text-gray-400" />
           </Link>
           <ol role="list" className="flex items-center space-x-4">
